@@ -1,0 +1,10 @@
+= Pass trhough PCIE devices to KVM VM
+
+== Ensure IOMMU is enabled
+== Enable vfio module
+
+./etc/modprobe.d/vfio-pci.conf
+----
+options vfio-pci disable_denylist=1 ids=10de:1eb1,10de:10f8,10de:1ad8,10de:1ad9
+softdep drm pre: vfio-pci
+----

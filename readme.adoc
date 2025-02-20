@@ -3,8 +3,47 @@
 == Ensure IOMMU is enabled
 == Enable vfio module
 
+.Determine device ids, for NVIDIA in this example
+----
+lspci -Dnn |grep -i NVIDIA
+----
+
+.Example Output
+----
+0000:d8:00.0 VGA compatible controller [0300]: NVIDIA Corporation TU104GL [Quadro RTX 4000] [10de:1eb1] (rev a1)
+0000:d8:00.1 Audio device [0403]: NVIDIA Corporation TU104 HD Audio Controller [10de:10f8] (rev a1)
+0000:d8:00.2 USB controller [0c03]: NVIDIA Corporation TU104 USB 3.1 Host Controller [10de:1ad8] (rev a1)
+0000:d8:00.3 Serial bus controller [0c80]: NVIDIA Corporation TU104 USB Type-C UCSI Controller [10de:1ad9] (rev a1)
+----
+
 ./etc/modprobe.d/vfio-pci.conf
 ----
 options vfio-pci disable_denylist=1 ids=10de:1eb1,10de:10f8,10de:1ad8,10de:1ad9
 softdep drm pre: vfio-pci
 ----
+
+== Attach Devices to VM
+Make sure that ALL devices belonging to same IOMMU group are assigned to a single VM.
+
+.Use the output from above lspci for device id to determine group and devices in group:
+----
+[root@node1 gpu]# ls -l /sys/kernel/iommu_groups/*/devices/0000:d8:00.0
+lrwxrwxrwx. 1 root root 0 Feb 20 14:51 /sys/kernel/iommu_groups/8/devices/0000:d8:00.0 -> ../../../../devices/pci0000:d7/0000:d7:00.0/0000:d8:00.0
+[root@node1 gpu]# ls /sys/kernel/iommu_groups/8/devices/
+0000:d8:00.0  0000:d8:00.1  0000:d8:00.2  0000:d8:00.3
+----
+
+.Example hostdev in domain XML for  "0000:d8:00.0 VGA compatible controller [0300]: NVIDIA Corporation TU104GL [Quadro RTX 4000]"
+----
+<hostdev mode="subsystem" type="pci" managed="yes">
+  <driver name="vfio"/>
+  <source>
+    <address domain="0x0000" bus="0xd8" slot="0x00" function="0x0"/>
+  </source>
+  <alias name="hostdev0"/>
+  <address type="pci" domain="0x0000" bus="0x08" slot="0x00" function="0x0"/>
+</hostdev>
+----
+
+
+

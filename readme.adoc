@@ -1,4 +1,4 @@
-= Pass trhough PCIE devices to KVM VM
+= Pass through PCIE devices to KVM VM
 
 == Ensure IOMMU is enabled
 == Enable vfio module
